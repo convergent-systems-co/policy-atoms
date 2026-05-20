@@ -1,38 +1,38 @@
-      # ATOMS.yml — catalog manifest for policy-atoms
-      #
-      # See https://github.com/convergent-systems-co/atoms-spec for the canonical schema this conforms to.
+# ATOMS.yml — catalog manifest for policy-atoms
+#
+# See https://github.com/convergent-systems-co/atoms-spec for the canonical schema this conforms to.
 
-      name: policy-atoms
-      version: 0.1.0
-      spec: atoms-spec/v1
-      domain: policy-atoms.com
-      ecosystem:
-        federation: xdao.co
-        redirect: policy.xdao.co
+name: policy-atoms
+version: 0.1.0
+spec: atoms-spec/v1
+domain: policy-atoms.com
+ecosystem:
+  federation: xdao.co
+  redirect: policy.xdao.co
 
-      purpose: |
-        Governance rules as typed, versioned, catalog-driven artifacts — subjects, resources, actions, effects, and conditions — so every organization stops reinventing the same policies.
+purpose: |
+  Governance rules as typed, versioned, catalog-driven artifacts — subjects, resources, actions, effects, and conditions — so every organization stops reinventing the same policies.
 
-      atomTypes:
-        - subject
-- resource
-- action
-- effect
-- condition
+atomTypes:
+  - subject
+  - resource
+  - action
+  - effect
+  - condition
 
-      compositionType: policies
-      compositionDir: policies
+compositionType: policies
+compositionDir: policies
 
-      ruleTypes:
-        - precedence
-- conflict-resolution
-- scope-inheritance
+ruleTypes:
+  - precedence
+  - conflict-resolution
+  - scope-inheritance
 
-      runtimeConsumers:
-        - olympus
-- aish
+runtimeConsumers:
+  - olympus
+  - aish
 
-      license: Apache-2.0
-      maintainers:
-        - name: Convergent Systems
-          contact: maintainers@xdao.co
+license: Apache-2.0
+maintainers:
+  - name: Convergent Systems
+    contact: maintainers@xdao.co
