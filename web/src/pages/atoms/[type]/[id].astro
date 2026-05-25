@@ -1,0 +1,99 @@
+---
+import Base from "../../../layouts/Base.astro";
+import catalog from "../../../../public/exports/catalog.json";
+
+export function getStaticPaths() {
+  return catalog.atoms.map((atom: any) => ({
+    params: { type: atom.type, id: atom.id },
+    props: { atom },
+  }));
+}
+
+const { atom } = Astro.props;
+
+// Pick type-specific payload fields
+const subject = atom.subject;
+const resource = atom.resource;
+const action = atom.action;
+const effect = atom.effect;
+const condition = atom.condition;
+---
+<Base title={atom.name} description={atom.description ?? `${atom.type} atom`}>
+  <p><a href="/atoms/">← All atoms</a></p>
+  <h1>{atom.name}</h1>
+  <p style="color: var(--muted);">
+    <code>{atom.type}</code> · <code>v{atom.version}</code>
+  </p>
+
+  {atom.description && <p>{atom.description}</p>}
+
+  {atom.tags && atom.tags.length > 0 && (
+    <p>
+      Tags: {atom.tags.map((tag: string) => (
+        <span style="display: inline-block; font-size: 0.875rem; background: #f4ece4; padding: 0.125rem 0.5rem; border-radius: 0.25rem; margin-right: 0.25rem;">{tag}</span>
+      ))}
+    </p>
+  )}
+
+  {subject && (
+    <section>
+      <h2>Subject</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {subject.type && (<><dt>Type</dt><dd><code>{subject.type}</code></dd></>)}
+        {subject.identifier && (<><dt>Identifier</dt><dd><code>{subject.identifier}</code></dd></>)}
+        {subject.attributes && Object.keys(subject.attributes).length > 0 && (
+          <><dt>Attributes</dt><dd>{Object.entries(subject.attributes).map(([k, v]) => <span style="margin-right: 0.75rem;"><code>{k}</code>: {String(v)}</span>)}</dd></>
+        )}
+      </dl>
+    </section>
+  )}
+
+  {resource && (
+    <section>
+      <h2>Resource</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {resource.type && (<><dt>Type</dt><dd><code>{resource.type}</code></dd></>)}
+        {resource.identifier && (<><dt>Identifier</dt><dd><code>{resource.identifier}</code></dd></>)}
+        {resource.scope && (<><dt>Scope</dt><dd><code>{resource.scope}</code></dd></>)}
+      </dl>
+    </section>
+  )}
+
+  {action && (
+    <section>
+      <h2>Action</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {action.verb && (<><dt>Verb</dt><dd><code>{action.verb}</code></dd></>)}
+        {action.operations && action.operations.length > 0 && (
+          <><dt>Operations</dt><dd>{action.operations.map((op: string) => <code style="margin-right: 0.5rem;">{op}</code>)}</dd></>
+        )}
+      </dl>
+    </section>
+  )}
+
+  {effect && (
+    <section>
+      <h2>Effect</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {effect.decision && (<><dt>Decision</dt><dd><code style={effect.decision === 'allow' ? 'color: #2d7a2d' : 'color: #c0392b'}>{effect.decision}</code></dd></>)}
+        {effect.audit && (<><dt>Audit</dt><dd>{effect.audit ? "yes" : "no"}</dd></>)}
+        {effect.precedence !== undefined && (<><dt>Precedence</dt><dd><code>{effect.precedence}</code></dd></>)}
+      </dl>
+    </section>
+  )}
+
+  {condition && (
+    <section>
+      <h2>Condition</h2>
+      <dl style="display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem;">
+        {condition.expression && (<><dt>Expression</dt><dd><code>{condition.expression}</code></dd></>)}
+        {condition.variables && Object.keys(condition.variables).length > 0 && (
+          <><dt>Variables</dt><dd>{Object.entries(condition.variables).map(([k, v]) => <span style="margin-right: 0.75rem;"><code>{k}</code>: {String(v)}</span>)}</dd></>
+        )}
+      </dl>
+    </section>
+  )}
+
+  <h2>Raw atom</h2>
+  <p><a href={`/atoms/${atom.type}/${atom.id}.json`}>/atoms/{atom.type}/{atom.id}.json</a> · <a href="/schemas/atom-v1.json">schema</a></p>
+</Base>
