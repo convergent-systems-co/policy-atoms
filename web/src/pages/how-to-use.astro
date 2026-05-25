@@ -1,0 +1,41 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="How to use" description="How to consume policy-atoms in your application.">
+  <h1>How to use policy-atoms</h1>
+
+  <h2>Read the catalog over HTTPS</h2>
+  <p>Every artifact is served under stable URLs with correct content-types:</p>
+  <pre><code>curl https://policy-atoms.com/exports/catalog.json
+curl https://policy-atoms.com/atoms/subject/authenticated-user.json
+curl https://policy-atoms.com/policies/read-own-data.json
+curl https://policy-atoms.com/schemas/composition-v1.json</code></pre>
+
+  <h2>Resolve a policy composition</h2>
+  <p>A policy composition lists references to atoms by URI and version. To evaluate a policy,
+  fetch each referenced atom and evaluate: subject → resource → action → condition → effect.</p>
+
+  <pre><code>{`// pseudo-code
+const policy = await fetch("/policies/read-own-data.json").then(r => r.json());
+const refs = policy.references;
+const subject = await fetch(uriToUrl(refs.subject.ref)).then(r => r.json());
+const resource = await fetch(uriToUrl(refs.resource.ref)).then(r => r.json());
+const action = await fetch(uriToUrl(refs.action.ref)).then(r => r.json());
+const conditions = await Promise.all(
+  (refs.conditions ?? []).map(r => fetch(uriToUrl(r.ref)).then(r => r.json()))
+);
+const effect = await fetch(uriToUrl(refs.effect.ref)).then(r => r.json());
+const decision = evaluatePolicy({ subject, resource, action, conditions, effect }, requestContext);`}</code></pre>
+
+  <h2>Compatibility rules</h2>
+  <p>Rules in <a href="/exports/catalog.json"><code>/exports/catalog.json</code></a> (under the <code>rules</code>
+  key) declare predicates over atoms. Example: a <code>precedence</code> rule resolves conflicts when multiple
+  policies match the same request — higher-precedence policies win. A <code>conflict-resolution</code> rule may
+  require that an explicit <code>deny</code> effect always overrides an <code>allow</code>. A composition that
+  violates a <code>require</code>-effect rule is malformed.</p>
+
+  <h2>Policy evaluation engines</h2>
+  <p>policy-atoms ships the catalog and its JSON Schema. Runtime policy engines (aish, Olympus) that evaluate
+  these compositions against live request contexts are available separately — they resolve atoms by URI,
+  evaluate conditions against request attributes, and return <code>allow</code> or <code>deny</code> decisions.</p>
+</Base>

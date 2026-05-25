@@ -1,0 +1,25 @@
+---
+import Base from "../../layouts/Base.astro";
+import catalog from "../../../public/exports/catalog.json";
+
+const compositions = catalog.compositions.slice().sort((a: any, b: any) => a.id.localeCompare(b.id));
+---
+<Base title="Policies" description="Policy compositions — assembled subjects, resources, actions, effects, and conditions.">
+  <h1>Policies</h1>
+  <p>{compositions.length} policy composition{compositions.length === 1 ? "" : "s"} — each assembles atoms into a complete governance policy definition.</p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: 1rem; margin-top: 2rem;">
+    {compositions.map((c: any) => (
+      <article style="border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; background: var(--card);">
+        <header style="margin-bottom: 0.5rem;">
+          <h3 style="margin: 0;"><a href={`/policies/${c.id}/`}>{c.name}</a></h3>
+          <code style="color: var(--muted); font-size: 0.75rem;">policy · v{c.version}</code>
+        </header>
+        {c.description && <p style="margin: 0.5rem 0; color: var(--muted);">{c.description}</p>}
+      </article>
+    ))}
+    {compositions.length === 0 && (
+      <p style="color: var(--muted);">No policies yet — catalog seeding in progress.</p>
+    )}
+  </div>
+</Base>
