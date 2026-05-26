@@ -1,0 +1,70 @@
+# atoms/no-destructive-prod-writes.toml — SRE safety policy atom
+#
+# Denies write and mutation operations targeting production-tagged resources
+# unless a backup confirmation precedes the operation.
+#
+# Conforms to: policy-atoms catalog spec (atoms-spec/v1.1.0)
+
+id           = "policy-atoms/policy/no-destructive-prod-writes"
+version      = "1.0.0"
+content_hash = ""
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+[body]
+name        = "No Destructive Production Writes"
+description = """
+Denies write, delete, drop, truncate, and force-push operations that target
+resources tagged as production unless a backup-confirmation step immediately
+precedes the operation in the workflow. Enforces the blast-radius principle:
+production mutations must be preceded by an explicit checkpoint.
+"""
+enforcement = "deny"
+
+[[body.rules]]
+id          = "deny-drop-prod"
+description = "Deny DROP, DELETE, TRUNCATE on production-tagged database resources without prior backup."
+condition   = "resource.env == 'production' AND intent matches /drop|delete|truncate/i AND NOT prior_step.type == 'backup-confirmation'"
+action      = "deny"
+reason      = "Destructive database operation in production requires a confirmed backup first."
+
+[[body.rules]]
+id          = "deny-force-push-main"
+description = "Deny git force-push to protected branches (main, release/*)."
+condition   = "intent == 'git.push' AND params.force == true AND params.ref matches /^(main|release\\/.+)$/"
+action      = "deny"
+reason      = "Force-pushing to protected branches destroys history and is prohibited."
+
+[[body.rules]]
+id          = "deny-deploy-without-backup"
+description = "Deny deploy operations to production that lack a backup confirmation in the current workflow."
+condition   = "resource.env == 'production' AND intent matches /deploy|rollout|apply/i AND NOT prior_step.type == 'backup-confirmation'"
+action      = "deny"
+reason      = "Production deployments require a backup-confirmation gate to have passed first."
+
+[[body.rules]]
+id          = "allow-with-backup"
+description = "Allow production writes when a backup confirmation immediately precedes the operation."
+condition   = "resource.env == 'production' AND prior_step.type == 'backup-confirmation' AND prior_step.status == 'confirmed'"
+action      = "allow"
+reason      = "Backup confirmed — production mutation may proceed."
+
+[[body.rules]]
+id          = "allow-non-prod"
+description = "Allow write operations on non-production resources without restriction."
+condition   = "resource.env != 'production'"
+action      = "allow"
+reason      = "Non-production environments are not subject to this policy."
+
+[body.caps]
+drachma_per_session = 0
+
+[body.trust_requirements]
+min_trust_level = "Signed"
+
+[body.tags]
+tags = ["sre", "production", "destructive-write", "safety", "backup-gate"]
+
+[meta]
+provenance = "convergent-systems-co/olympus-central#435"
+license    = "Apache-2.0"
