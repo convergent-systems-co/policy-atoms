@@ -1,0 +1,43 @@
+{
+  "id": "policy-atoms/policy/security-baseline",
+  "type": "policy",
+  "version": "1.0.0",
+  "name": "Security Baseline",
+  "description": "Requires Signed trust level for capability dispatch. Denies unsigned shell command execution. Caps drachma to 50 per session.",
+  "rules": [
+    {
+      "id": "require-signed-dispatch",
+      "effect": "deny",
+      "intent_pattern": "capability.*",
+      "condition": "trust_level < Signed",
+      "reason": "Unsigned capability dispatch denied under security-baseline."
+    },
+    {
+      "id": "deny-unsigned-shell",
+      "effect": "deny",
+      "intent_pattern": "shell.*",
+      "condition": "trust_level < Signed",
+      "reason": "Shell execution requires Signed trust level."
+    },
+    {
+      "id": "allow-signed",
+      "effect": "allow",
+      "intent_pattern": "*",
+      "condition": "trust_level >= Signed",
+      "reason": "Signed actors may proceed."
+    }
+  ],
+  "caps": {
+    "drachma_per_session": 50
+  },
+  "trust_requirements": {
+    "min_trust_level": "Signed"
+  },
+  "tags": ["security", "signed-only", "capability"],
+  "lifecycle": "draft",
+  "provenance": {
+    "source": "convergent-systems-co",
+    "addedAt": "2026-05-26T00:00:00Z"
+  },
+  "license": "Apache-2.0"
+}
