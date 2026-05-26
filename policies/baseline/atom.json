@@ -1,0 +1,28 @@
+{
+  "id": "policy-atoms/policy/baseline",
+  "type": "policy",
+  "version": "1.0.0",
+  "name": "Baseline",
+  "description": "Allows all intents with no capability caps. The open policy floor for development and experimentation.",
+  "rules": [
+    {
+      "id": "allow-all",
+      "effect": "allow",
+      "intent_pattern": "*",
+      "reason": "Baseline policy permits all intents without restriction."
+    }
+  ],
+  "caps": {
+    "drachma_per_session": null
+  },
+  "trust_requirements": {
+    "min_trust_level": "any"
+  },
+  "tags": ["baseline", "permissive", "development"],
+  "lifecycle": "draft",
+  "provenance": {
+    "source": "convergent-systems-co",
+    "addedAt": "2026-05-26T00:00:00Z"
+  },
+  "license": "Apache-2.0"
+}

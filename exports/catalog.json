@@ -1,7 +1,7 @@
 {
   "catalog": "policy-atoms",
   "version": "0.1.0",
-  "built_at": "2026-05-26T21:12:36+00:00",
+  "built_at": "2026-05-26T21:14:50+00:00",
   "atoms": [
     {
       "schema": "https://policy-atoms.com/schemas/atom-v1.json",
@@ -970,6 +970,170 @@
       }
     }
   ],
-  "compositions": [],
+  "compositions": [
+    {
+      "id": "policy-atoms/policy/baseline",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Baseline",
+      "description": "Allows all intents with no capability caps. The open policy floor for development and experimentation.",
+      "rules": [
+        {
+          "id": "allow-all",
+          "effect": "allow",
+          "intent_pattern": "*",
+          "reason": "Baseline policy permits all intents without restriction."
+        }
+      ],
+      "caps": {
+        "drachma_per_session": null
+      },
+      "trust_requirements": {
+        "min_trust_level": "any"
+      },
+      "tags": [
+        "baseline",
+        "permissive",
+        "development"
+      ],
+      "lifecycle": "draft",
+      "provenance": {
+        "source": "convergent-systems-co",
+        "addedAt": "2026-05-26T00:00:00Z"
+      },
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "policy-atoms/policy/dev",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Development",
+      "description": "Allows all intents. Adds require-confirm for destructive operations above drachma cost 20.",
+      "rules": [
+        {
+          "id": "require-confirm-destructive",
+          "effect": "require-confirm",
+          "intent_pattern": "delete.*|destroy.*|drop.*|truncate.*",
+          "condition": "drachma_cost > 20",
+          "reason": "High-cost destructive operations require confirmation in dev."
+        },
+        {
+          "id": "allow-all",
+          "effect": "allow",
+          "intent_pattern": "*",
+          "reason": "Development policy allows all intents."
+        }
+      ],
+      "caps": {
+        "drachma_per_session": null
+      },
+      "trust_requirements": {
+        "min_trust_level": "any"
+      },
+      "tags": [
+        "development",
+        "permissive",
+        "confirm-destructive"
+      ],
+      "lifecycle": "draft",
+      "provenance": {
+        "source": "convergent-systems-co",
+        "addedAt": "2026-05-26T00:00:00Z"
+      },
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "policy-atoms/policy/prod-read-only",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Production Read-Only",
+      "description": "Denies all write and mutate intents targeting production contexts. Allows read, observe, and report intents. For SRE persona in prod-adjacent contexts.",
+      "rules": [
+        {
+          "id": "deny-write-prod",
+          "effect": "deny",
+          "intent_pattern": "write.*|mutate.*|deploy.*|delete.*",
+          "reason": "Write operations denied in prod-read-only context."
+        },
+        {
+          "id": "allow-read",
+          "effect": "allow",
+          "intent_pattern": "read.*|observe.*|report.*|list.*|get.*",
+          "reason": "Read and observe intents allowed."
+        },
+        {
+          "id": "deny-default",
+          "effect": "deny",
+          "intent_pattern": "*",
+          "reason": "Default deny for unmatched intents."
+        }
+      ],
+      "caps": {
+        "drachma_per_session": null
+      },
+      "trust_requirements": {
+        "min_trust_level": "any"
+      },
+      "tags": [
+        "production",
+        "read-only",
+        "sre",
+        "safe"
+      ],
+      "lifecycle": "draft",
+      "provenance": {
+        "source": "convergent-systems-co",
+        "addedAt": "2026-05-26T00:00:00Z"
+      },
+      "license": "Apache-2.0"
+    },
+    {
+      "id": "policy-atoms/policy/security-baseline",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Security Baseline",
+      "description": "Requires Signed trust level for capability dispatch. Denies unsigned shell command execution. Caps drachma to 50 per session.",
+      "rules": [
+        {
+          "id": "require-signed-dispatch",
+          "effect": "deny",
+          "intent_pattern": "capability.*",
+          "condition": "trust_level < Signed",
+          "reason": "Unsigned capability dispatch denied under security-baseline."
+        },
+        {
+          "id": "deny-unsigned-shell",
+          "effect": "deny",
+          "intent_pattern": "shell.*",
+          "condition": "trust_level < Signed",
+          "reason": "Shell execution requires Signed trust level."
+        },
+        {
+          "id": "allow-signed",
+          "effect": "allow",
+          "intent_pattern": "*",
+          "condition": "trust_level >= Signed",
+          "reason": "Signed actors may proceed."
+        }
+      ],
+      "caps": {
+        "drachma_per_session": 50
+      },
+      "trust_requirements": {
+        "min_trust_level": "Signed"
+      },
+      "tags": [
+        "security",
+        "signed-only",
+        "capability"
+      ],
+      "lifecycle": "draft",
+      "provenance": {
+        "source": "convergent-systems-co",
+        "addedAt": "2026-05-26T00:00:00Z"
+      },
+      "license": "Apache-2.0"
+    }
+  ],
   "rules": []
 }
