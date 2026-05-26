@@ -1,1 +1,8 @@
-{"version":"0.1.0","atoms":[],"compositions":[],"rules":[]}
+{
+  "catalog": "policy-atoms",
+  "version": "0.1.0",
+  "built_at": "2026-05-26T15:46:53+00:00",
+  "atoms": [],
+  "compositions": [],
+  "rules": []
+}
