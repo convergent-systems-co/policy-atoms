@@ -1,0 +1,40 @@
+{
+  "id": "policy-atoms/policy/prod-read-only",
+  "type": "policy",
+  "version": "1.0.0",
+  "name": "Production Read-Only",
+  "description": "Denies all write and mutate intents targeting production contexts. Allows read, observe, and report intents. For SRE persona in prod-adjacent contexts.",
+  "rules": [
+    {
+      "id": "deny-write-prod",
+      "effect": "deny",
+      "intent_pattern": "write.*|mutate.*|deploy.*|delete.*",
+      "reason": "Write operations denied in prod-read-only context."
+    },
+    {
+      "id": "allow-read",
+      "effect": "allow",
+      "intent_pattern": "read.*|observe.*|report.*|list.*|get.*",
+      "reason": "Read and observe intents allowed."
+    },
+    {
+      "id": "deny-default",
+      "effect": "deny",
+      "intent_pattern": "*",
+      "reason": "Default deny for unmatched intents."
+    }
+  ],
+  "caps": {
+    "drachma_per_session": null
+  },
+  "trust_requirements": {
+    "min_trust_level": "any"
+  },
+  "tags": ["production", "read-only", "sre", "safe"],
+  "lifecycle": "draft",
+  "provenance": {
+    "source": "convergent-systems-co",
+    "addedAt": "2026-05-26T00:00:00Z"
+  },
+  "license": "Apache-2.0"
+}

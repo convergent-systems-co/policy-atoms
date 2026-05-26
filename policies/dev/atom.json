@@ -1,0 +1,35 @@
+{
+  "id": "policy-atoms/policy/dev",
+  "type": "policy",
+  "version": "1.0.0",
+  "name": "Development",
+  "description": "Allows all intents. Adds require-confirm for destructive operations above drachma cost 20.",
+  "rules": [
+    {
+      "id": "require-confirm-destructive",
+      "effect": "require-confirm",
+      "intent_pattern": "delete.*|destroy.*|drop.*|truncate.*",
+      "condition": "drachma_cost > 20",
+      "reason": "High-cost destructive operations require confirmation in dev."
+    },
+    {
+      "id": "allow-all",
+      "effect": "allow",
+      "intent_pattern": "*",
+      "reason": "Development policy allows all intents."
+    }
+  ],
+  "caps": {
+    "drachma_per_session": null
+  },
+  "trust_requirements": {
+    "min_trust_level": "any"
+  },
+  "tags": ["development", "permissive", "confirm-destructive"],
+  "lifecycle": "draft",
+  "provenance": {
+    "source": "convergent-systems-co",
+    "addedAt": "2026-05-26T00:00:00Z"
+  },
+  "license": "Apache-2.0"
+}

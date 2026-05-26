@@ -1,0 +1,44 @@
+{
+  "catalog": "policy-atoms",
+  "version": "0.1.0",
+  "built_at": "2026-05-26T00:00:00Z",
+  "atoms": [
+    {
+      "id": "policy-atoms/policy/baseline",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Baseline",
+      "description": "Allows all intents with no capability caps. The open policy floor for development and experimentation.",
+      "tags": ["baseline", "permissive", "development"],
+      "lifecycle": "draft"
+    },
+    {
+      "id": "policy-atoms/policy/security-baseline",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Security Baseline",
+      "description": "Requires Signed trust level for capability dispatch. Denies unsigned shell command execution. Caps drachma to 50 per session.",
+      "tags": ["security", "signed-only", "capability"],
+      "lifecycle": "draft"
+    },
+    {
+      "id": "policy-atoms/policy/prod-read-only",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Production Read-Only",
+      "description": "Denies all write and mutate intents targeting production contexts. Allows read, observe, and report intents. For SRE persona in prod-adjacent contexts.",
+      "tags": ["production", "read-only", "sre", "safe"],
+      "lifecycle": "draft"
+    },
+    {
+      "id": "policy-atoms/policy/dev",
+      "type": "policy",
+      "version": "1.0.0",
+      "name": "Development",
+      "description": "Allows all intents. Adds require-confirm for destructive operations above drachma cost 20.",
+      "tags": ["development", "permissive", "confirm-destructive"],
+      "lifecycle": "draft"
+    }
+  ],
+  "compositions": []
+}
