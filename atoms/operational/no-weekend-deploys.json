@@ -1,0 +1,26 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "operational/no-weekend-deploys",
+  "version": "1.0.0",
+  "name": "Production deployments blocked Friday 18:00 – Monday 06:00 UTC",
+  "description": "Production deployments are denied during the weekend change freeze window (Friday 18:00 UTC through Monday 06:00 UTC). Emergency deployments require an explicit break-glass override with a logged justification.",
+  "tags": ["operational", "deployment", "change-window", "production"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["environment:production:*"],
+    "actions": ["deploy"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "time:day-of-week in [friday-18:00, saturday, sunday, monday-06:00]"
+      },
+      {
+        "type": "unless",
+        "check": "override:break-glass-active"
+      }
+    ],
+    "rationale": "Weekend deploys reduce incidents because support capacity is lower and rollback windows are longer. The break-glass exception preserves the ability to ship critical fixes."
+  }
+}

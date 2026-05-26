@@ -1,0 +1,26 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "data-protection/audit-all-pii-access",
+  "version": "1.0.0",
+  "name": "All access to PII must be logged with actor, timestamp, and reason",
+  "description": "Every read, write, or delete operation on data classified as PII must generate an audit log entry capturing: the acting principal, the precise timestamp (UTC ISO-8601), the resource accessed, and a stated reason. Access without audit logging is denied.",
+  "tags": ["data-protection", "pii", "audit", "privacy", "compliance"],
+  "policy": {
+    "effect": "require-confirm",
+    "subjects": ["*"],
+    "resources": ["data:pii:*"],
+    "actions": ["read", "write", "delete"],
+    "conditions": [
+      {
+        "type": "require",
+        "check": "audit:entry-written"
+      },
+      {
+        "type": "require",
+        "check": "audit:reason-provided"
+      }
+    ],
+    "rationale": "PII access without an audit trail makes breach investigations impossible and violates most privacy regulations. The reason field enables proportionality review."
+  }
+}

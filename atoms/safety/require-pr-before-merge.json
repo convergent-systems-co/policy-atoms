@@ -1,0 +1,17 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "safety/require-pr-before-merge",
+  "version": "1.0.0",
+  "name": "Require pull request before merging to protected branches",
+  "description": "All merges to main or release/* branches must arrive via a reviewed pull request. Direct commits to protected branches are denied.",
+  "tags": ["git", "safety", "code-review", "branch-protection"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["git:branch:main", "git:branch:release/*"],
+    "actions": ["git:commit:direct", "git:merge:direct"],
+    "conditions": [],
+    "rationale": "Pull requests create an auditable review checkpoint. Bypassing them removes the last line of defence before production-quality code is established."
+  }
+}

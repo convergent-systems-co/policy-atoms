@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "ai-agent/log-all-agent-tool-calls",
+  "version": "1.0.0",
+  "name": "All tool invocations by agents must be logged",
+  "description": "Every tool call made by an AI agent must generate a structured audit log entry containing: agent identity, tool name, input parameters (redacted of secrets), timestamp, and result status. Tool invocations without audit logging are denied.",
+  "tags": ["ai-agent", "audit", "logging", "observability"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["agent:*", "identity:ai-*"],
+    "resources": ["tool:*"],
+    "actions": ["invoke"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "audit:tool-call-entry-written"
+      }
+    ],
+    "rationale": "Unlogged agent tool calls are unauditable. If an agent causes harm, the audit trail is the only path to root cause. Logging is the minimum condition for operating autonomous agents responsibly."
+  }
+}

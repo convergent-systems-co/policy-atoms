@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "data-protection/encrypt-data-in-transit",
+  "version": "1.0.0",
+  "name": "Network communication must use TLS 1.2 or higher",
+  "description": "All network connections transmitting application data must use TLS 1.2 or higher. Plaintext HTTP, unencrypted database connections, and deprecated TLS versions (1.0, 1.1) are denied.",
+  "tags": ["data-protection", "encryption", "tls", "network"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["network:connection:*"],
+    "actions": ["establish"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "network:tls-version >= 1.2"
+      }
+    ],
+    "rationale": "TLS 1.0 and 1.1 have known vulnerabilities. Plaintext connections expose data to any observer on the network path. TLS 1.2+ is the minimum acceptable baseline as of 2024."
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "code-quality/no-merge-with-open-critical",
+  "version": "1.0.0",
+  "name": "PRs with open CRITICAL findings cannot be merged",
+  "description": "Pull requests that have one or more open findings with severity CRITICAL — from static analysis, security scanning, or code review — are denied merge until all CRITICAL findings are resolved or explicitly accepted with a documented justification.",
+  "tags": ["code-quality", "security", "code-review", "ci-gate"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["git:pull-request:*"],
+    "actions": ["merge"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "review:open-critical-findings-count > 0"
+      }
+    ],
+    "rationale": "CRITICAL findings represent known, high-severity defects. Merging code with open CRITICAL findings ships a known defect. The bar for an accepted-with-justification exception should be very high."
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "operational/require-change-approval",
+  "version": "1.0.0",
+  "name": "Infrastructure changes require change-management approval",
+  "description": "Changes to production infrastructure — compute, networking, DNS, database schema, IAM — require an approved change-management ticket before execution. Infrastructure mutations without an approved ticket are denied.",
+  "tags": ["operational", "change-management", "infrastructure", "governance"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["infrastructure:*"],
+    "actions": ["create", "update", "delete"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "change-ticket:approved"
+      }
+    ],
+    "rationale": "Untracked infrastructure changes are the leading cause of production incidents. Change tickets create a searchable audit trail that makes rollback and post-incident analysis possible."
+  }
+}

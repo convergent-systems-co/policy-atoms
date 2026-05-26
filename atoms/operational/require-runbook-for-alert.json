@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "operational/require-runbook-for-alert",
+  "version": "1.0.0",
+  "name": "Every alert must have a linked runbook",
+  "description": "Alerts created in any monitoring system must reference a runbook that describes the healthy state, the sick state, the recovery procedure, and the escalation path. Alerts without a runbook link are denied activation.",
+  "tags": ["operational", "observability", "runbook", "alerting"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["monitoring:alert:*"],
+    "actions": ["create", "activate"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "alert:runbook-url-present"
+      }
+    ],
+    "rationale": "An alert without a runbook is noise — it wakes someone up without telling them what to do. Actionable alerts require a runbook; non-actionable alerts should not exist."
+  }
+}

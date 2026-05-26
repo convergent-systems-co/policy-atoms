@@ -1,8 +1,975 @@
 {
   "catalog": "policy-atoms",
   "version": "0.1.0",
-  "built_at": "2026-05-26T15:47:41+00:00",
-  "atoms": [],
+  "built_at": "2026-05-26T21:14:50+00:00",
+  "atoms": [
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "access-control/least-privilege-default",
+      "version": "1.0.0",
+      "name": "Least privilege — default deny, explicit grant only",
+      "description": "All access is denied by default. Permissions must be explicitly granted to named subjects for specific resources and actions. No implicit inheritance of broad grants.",
+      "tags": [
+        "access-control",
+        "least-privilege",
+        "zero-trust"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "*"
+        ],
+        "actions": [
+          "*"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "access:explicit-grant-exists"
+          }
+        ],
+        "rationale": "Default-deny is the foundation of zero-trust. Every permission that doesn't exist in the grant table is a permissions that can't be exploited."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "access-control/no-root-in-production",
+      "version": "1.0.0",
+      "name": "Root or admin access to production requires MFA and justification",
+      "description": "Access to production systems using root or administrative credentials is denied unless the session has a recent MFA verification (within 15 minutes) and a logged justification reason.",
+      "tags": [
+        "access-control",
+        "production",
+        "mfa",
+        "admin"
+      ],
+      "policy": {
+        "effect": "require-confirm",
+        "subjects": [
+          "role:admin",
+          "role:root"
+        ],
+        "resources": [
+          "environment:production:*"
+        ],
+        "actions": [
+          "*"
+        ],
+        "conditions": [
+          {
+            "type": "require",
+            "check": "auth:mfa-verified-within-15m"
+          },
+          {
+            "type": "require",
+            "check": "audit:justification-logged"
+          }
+        ],
+        "rationale": "Root access to production is the highest-risk action in an organization's surface area. MFA recency and logged justification ensure every such session is deliberate and traceable."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "access-control/no-shared-credentials",
+      "version": "1.0.0",
+      "name": "Credentials must not be shared between principals",
+      "description": "Service accounts, API keys, and user credentials must be bound to exactly one principal. Credentials detected as in use by more than one distinct identity are denied and flagged for rotation.",
+      "tags": [
+        "access-control",
+        "credentials",
+        "identity",
+        "audit"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "credential:*",
+          "api-key:*",
+          "service-account:*"
+        ],
+        "actions": [
+          "use",
+          "authenticate"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "credential:shared-by-multiple-principals"
+          }
+        ],
+        "rationale": "Shared credentials prevent attribution — when an incident occurs, you cannot determine which principal acted. They also mean revoking one compromised user requires rotating credentials that other users depend on."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "access-control/read-only-by-default",
+      "version": "1.0.0",
+      "name": "New identities receive read-only access until explicitly escalated",
+      "description": "Newly provisioned users, service accounts, and agents are granted read-only access to their designated scope by default. Write, execute, and admin permissions must be explicitly granted via a separate approval.",
+      "tags": [
+        "access-control",
+        "least-privilege",
+        "onboarding",
+        "default-deny"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "identity:new"
+        ],
+        "resources": [
+          "*"
+        ],
+        "actions": [
+          "write",
+          "delete",
+          "exec",
+          "admin:*"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "access:explicit-write-grant-exists"
+          }
+        ],
+        "rationale": "Default read-only prevents accidental mutation during the onboarding window when principals are least familiar with the system. Escalation is a deliberate act."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "access-control/require-2fa-admin",
+      "version": "1.0.0",
+      "name": "Administrative actions require 2FA verification",
+      "description": "Any action classified as administrative — user provisioning, permission changes, configuration mutations, credential rotation — requires a verified 2FA challenge within the current session.",
+      "tags": [
+        "access-control",
+        "mfa",
+        "admin",
+        "authentication"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "*"
+        ],
+        "actions": [
+          "admin:*",
+          "iam:*",
+          "config:write",
+          "credential:rotate"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "auth:2fa-verified"
+          }
+        ],
+        "rationale": "Administrative actions have outsized blast radius. 2FA ensures that even a compromised password alone is insufficient to execute them."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "access-control/time-bounded-access",
+      "version": "1.0.0",
+      "name": "Elevated access grants expire after 24 hours",
+      "description": "Any access grant marked as elevated — temporary admin, break-glass access, on-call escalation — automatically expires 24 hours after issuance. Renewal requires a fresh approval.",
+      "tags": [
+        "access-control",
+        "time-bounded",
+        "least-privilege",
+        "break-glass"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "role:elevated",
+          "role:temporary-admin",
+          "role:break-glass"
+        ],
+        "resources": [
+          "*"
+        ],
+        "actions": [
+          "*"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "access:grant-age > 86400s"
+          }
+        ],
+        "rationale": "Permanent elevated access is a vulnerability waiting to be exploited. Time-bounding forces periodic reconfirmation that elevated access is still needed."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "ai-agent/cap-agent-drachma-spend",
+      "version": "1.0.0",
+      "name": "Agent sessions are capped at 100 drachma unless explicitly raised",
+      "description": "An agent session must not spend more than 100 drachma in inference, tool-call, or external API costs without explicit authorization from the principal. Sessions that reach the cap are paused and must request continuation.",
+      "tags": [
+        "ai-agent",
+        "cost-control",
+        "drachma",
+        "olympus"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "agent:*"
+        ],
+        "resources": [
+          "resource:inference:*",
+          "resource:tool-call:*",
+          "resource:external-api:*"
+        ],
+        "actions": [
+          "invoke",
+          "spend"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "session:drachma-spent >= 100"
+          },
+          {
+            "type": "unless",
+            "check": "principal:raised-cap-this-session"
+          }
+        ],
+        "rationale": "Unbounded agent spend is a runaway cost risk. A 100-drachma default cap ensures agents pause and ask before escalating spend, giving the principal an opportunity to reconsider scope."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "ai-agent/log-all-agent-tool-calls",
+      "version": "1.0.0",
+      "name": "All tool invocations by agents must be logged",
+      "description": "Every tool call made by an AI agent must generate a structured audit log entry containing: agent identity, tool name, input parameters (redacted of secrets), timestamp, and result status. Tool invocations without audit logging are denied.",
+      "tags": [
+        "ai-agent",
+        "audit",
+        "logging",
+        "observability"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "agent:*",
+          "identity:ai-*"
+        ],
+        "resources": [
+          "tool:*"
+        ],
+        "actions": [
+          "invoke"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "audit:tool-call-entry-written"
+          }
+        ],
+        "rationale": "Unlogged agent tool calls are unauditable. If an agent causes harm, the audit trail is the only path to root cause. Logging is the minimum condition for operating autonomous agents responsibly."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "ai-agent/no-agent-credential-access",
+      "version": "1.0.0",
+      "name": "Agents cannot read credential stores directly",
+      "description": "AI agents are denied direct read access to credential stores, secret vaults, .env files, keychain entries, and any resource that resolves to a plaintext secret. Agents must request credentials via an intermediary that returns presence confirmation, not values.",
+      "tags": [
+        "ai-agent",
+        "secrets",
+        "credential-access",
+        "safety"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "agent:*",
+          "identity:ai-*"
+        ],
+        "resources": [
+          "credential-store:*",
+          "vault:*",
+          "keychain:*",
+          "file:.env*"
+        ],
+        "actions": [
+          "read"
+        ],
+        "conditions": [],
+        "rationale": "An agent that can read credentials can exfiltrate them — either intentionally through prompt injection or accidentally by including them in a response. Intermediary-only access prevents this class of leak."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "ai-agent/no-autonomous-production-writes",
+      "version": "1.0.0",
+      "name": "AI agents cannot write to production without human confirmation",
+      "description": "Autonomous AI agents are denied write operations on production resources without explicit human confirmation in the current session. The confirmation must name the resource and action; blanket pre-authorizations are not accepted.",
+      "tags": [
+        "ai-agent",
+        "production",
+        "human-in-loop",
+        "safety"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "agent:*",
+          "identity:ai-*"
+        ],
+        "resources": [
+          "environment:production:*"
+        ],
+        "actions": [
+          "write",
+          "delete",
+          "deploy",
+          "migrate"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "human:confirmation-given-this-session"
+          }
+        ],
+        "rationale": "Production writes by autonomous agents carry blast radius that exceeds the agent's ability to evaluate context. Human confirmation is a circuit breaker, not bureaucracy."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "ai-agent/require-human-in-loop-for-irreversible",
+      "version": "1.0.0",
+      "name": "Irreversible actions require human approval regardless of agent confidence",
+      "description": "Actions that cannot be undone — permanent deletion, table drops, published releases, sent communications, financial transactions — require explicit human approval before execution. No level of agent confidence bypasses this gate.",
+      "tags": [
+        "ai-agent",
+        "human-in-loop",
+        "irreversible",
+        "safety"
+      ],
+      "policy": {
+        "effect": "require-confirm",
+        "subjects": [
+          "agent:*",
+          "identity:ai-*"
+        ],
+        "resources": [
+          "*"
+        ],
+        "actions": [
+          "delete:permanent",
+          "drop",
+          "publish",
+          "send:external",
+          "transaction:financial"
+        ],
+        "conditions": [],
+        "rationale": "Reversibility is a prerequisite for autonomous action. When an action cannot be reversed, the cost of a mistake is unbounded. Human approval is the minimum acceptable gate regardless of chain-of-thought length."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "code-quality/no-merge-with-open-critical",
+      "version": "1.0.0",
+      "name": "PRs with open CRITICAL findings cannot be merged",
+      "description": "Pull requests that have one or more open findings with severity CRITICAL — from static analysis, security scanning, or code review — are denied merge until all CRITICAL findings are resolved or explicitly accepted with a documented justification.",
+      "tags": [
+        "code-quality",
+        "security",
+        "code-review",
+        "ci-gate"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "git:pull-request:*"
+        ],
+        "actions": [
+          "merge"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "review:open-critical-findings-count > 0"
+          }
+        ],
+        "rationale": "CRITICAL findings represent known, high-severity defects. Merging code with open CRITICAL findings ships a known defect. The bar for an accepted-with-justification exception should be very high."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "data-protection/audit-all-pii-access",
+      "version": "1.0.0",
+      "name": "All access to PII must be logged with actor, timestamp, and reason",
+      "description": "Every read, write, or delete operation on data classified as PII must generate an audit log entry capturing: the acting principal, the precise timestamp (UTC ISO-8601), the resource accessed, and a stated reason. Access without audit logging is denied.",
+      "tags": [
+        "data-protection",
+        "pii",
+        "audit",
+        "privacy",
+        "compliance"
+      ],
+      "policy": {
+        "effect": "require-confirm",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "data:pii:*"
+        ],
+        "actions": [
+          "read",
+          "write",
+          "delete"
+        ],
+        "conditions": [
+          {
+            "type": "require",
+            "check": "audit:entry-written"
+          },
+          {
+            "type": "require",
+            "check": "audit:reason-provided"
+          }
+        ],
+        "rationale": "PII access without an audit trail makes breach investigations impossible and violates most privacy regulations. The reason field enables proportionality review."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "data-protection/encrypt-data-at-rest",
+      "version": "1.0.0",
+      "name": "Sensitive data must be encrypted at rest",
+      "description": "Data classified as sensitive (PII, credentials, financial records, health data) must be stored using AES-256 or equivalent encryption. Storage of sensitive data in plaintext is denied.",
+      "tags": [
+        "data-protection",
+        "encryption",
+        "storage",
+        "compliance"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "storage:*"
+        ],
+        "actions": [
+          "write"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "data:classification == sensitive"
+          },
+          {
+            "type": "unless",
+            "check": "storage:encryption-enabled"
+          }
+        ],
+        "rationale": "Encryption at rest ensures that physical or logical access to storage media does not directly expose sensitive data. Defense in depth requires this layer even when access controls are strong."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "data-protection/encrypt-data-in-transit",
+      "version": "1.0.0",
+      "name": "Network communication must use TLS 1.2 or higher",
+      "description": "All network connections transmitting application data must use TLS 1.2 or higher. Plaintext HTTP, unencrypted database connections, and deprecated TLS versions (1.0, 1.1) are denied.",
+      "tags": [
+        "data-protection",
+        "encryption",
+        "tls",
+        "network"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "network:connection:*"
+        ],
+        "actions": [
+          "establish"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "network:tls-version >= 1.2"
+          }
+        ],
+        "rationale": "TLS 1.0 and 1.1 have known vulnerabilities. Plaintext connections expose data to any observer on the network path. TLS 1.2+ is the minimum acceptable baseline as of 2024."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "data-protection/no-pii-in-logs",
+      "version": "1.0.0",
+      "name": "Log entries must not contain personally identifiable information",
+      "description": "Structured log entries must not contain PII including email addresses, SSNs, phone numbers, physical addresses, full names, or government-issued identifiers. PII-containing log writes are denied at the logging boundary.",
+      "tags": [
+        "data-protection",
+        "pii",
+        "logging",
+        "privacy"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "log:*"
+        ],
+        "actions": [
+          "write"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "content:pii-detected"
+          }
+        ],
+        "rationale": "Logs are often retained long-term, indexed broadly, and accessible to many engineers. PII in logs creates privacy exposure that is difficult to remediate retroactively."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "data-protection/no-retain-after-purpose",
+      "version": "1.0.0",
+      "name": "Data must be deleted when its collection purpose expires",
+      "description": "Data must not be retained beyond the stated retention period or after the purpose for which it was collected is fulfilled. Continued storage of expired-purpose data is denied and triggers a deletion workflow.",
+      "tags": [
+        "data-protection",
+        "retention",
+        "privacy",
+        "compliance",
+        "gdpr"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "storage:*"
+        ],
+        "actions": [
+          "retain"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "data:retention-period-expired"
+          }
+        ],
+        "rationale": "Data you don't have can't be breached or misused. Retention limits enforce data minimization and reduce liability exposure under privacy regulations."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "operational/no-long-running-transactions",
+      "version": "1.0.0",
+      "name": "Database transactions must complete within 30 seconds",
+      "description": "Database transactions that exceed 30 seconds are automatically rolled back and the initiating query is logged. Transactions holding locks for more than 30 seconds block other operations and indicate a design defect.",
+      "tags": [
+        "operational",
+        "database",
+        "transactions",
+        "performance"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "database:transaction:*"
+        ],
+        "actions": [
+          "hold"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "transaction:age > 30s"
+          }
+        ],
+        "rationale": "Long-running transactions hold locks that cascade into broader unavailability. A 30-second bound is generous for application logic and strict enough to prevent runaway queries from starving the system."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "operational/no-weekend-deploys",
+      "version": "1.0.0",
+      "name": "Production deployments blocked Friday 18:00 – Monday 06:00 UTC",
+      "description": "Production deployments are denied during the weekend change freeze window (Friday 18:00 UTC through Monday 06:00 UTC). Emergency deployments require an explicit break-glass override with a logged justification.",
+      "tags": [
+        "operational",
+        "deployment",
+        "change-window",
+        "production"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "environment:production:*"
+        ],
+        "actions": [
+          "deploy"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "time:day-of-week in [friday-18:00, saturday, sunday, monday-06:00]"
+          },
+          {
+            "type": "unless",
+            "check": "override:break-glass-active"
+          }
+        ],
+        "rationale": "Weekend deploys reduce incidents because support capacity is lower and rollback windows are longer. The break-glass exception preserves the ability to ship critical fixes."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "operational/require-change-approval",
+      "version": "1.0.0",
+      "name": "Infrastructure changes require change-management approval",
+      "description": "Changes to production infrastructure — compute, networking, DNS, database schema, IAM — require an approved change-management ticket before execution. Infrastructure mutations without an approved ticket are denied.",
+      "tags": [
+        "operational",
+        "change-management",
+        "infrastructure",
+        "governance"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "infrastructure:*"
+        ],
+        "actions": [
+          "create",
+          "update",
+          "delete"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "change-ticket:approved"
+          }
+        ],
+        "rationale": "Untracked infrastructure changes are the leading cause of production incidents. Change tickets create a searchable audit trail that makes rollback and post-incident analysis possible."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "operational/require-error-handling",
+      "version": "1.0.0",
+      "name": "Every external API call must have explicit error handling",
+      "description": "Code that invokes external APIs, third-party services, or network endpoints must have explicit error handling that either recovers, retries with backoff, or escalates with a logged error. Silent swallowing of errors is denied at code review.",
+      "tags": [
+        "operational",
+        "error-handling",
+        "reliability",
+        "code-quality"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "code:external-call:*"
+        ],
+        "actions": [
+          "merge"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "code:error-handling-absent"
+          }
+        ],
+        "rationale": "External calls fail. Without explicit error handling, every third-party outage becomes an unhandled exception that corrupts application state or silently drops data."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "operational/require-runbook-for-alert",
+      "version": "1.0.0",
+      "name": "Every alert must have a linked runbook",
+      "description": "Alerts created in any monitoring system must reference a runbook that describes the healthy state, the sick state, the recovery procedure, and the escalation path. Alerts without a runbook link are denied activation.",
+      "tags": [
+        "operational",
+        "observability",
+        "runbook",
+        "alerting"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "monitoring:alert:*"
+        ],
+        "actions": [
+          "create",
+          "activate"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "alert:runbook-url-present"
+          }
+        ],
+        "rationale": "An alert without a runbook is noise — it wakes someone up without telling them what to do. Actionable alerts require a runbook; non-actionable alerts should not exist."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "safety/no-direct-production-deploy",
+      "version": "1.0.0",
+      "name": "No direct production deployment without CI green gate",
+      "description": "Production deployments require all CI checks to pass before the deploy action is permitted. Manual out-of-band deploys that bypass CI are denied.",
+      "tags": [
+        "deployment",
+        "safety",
+        "ci-gate",
+        "production"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "environment:production:*"
+        ],
+        "actions": [
+          "deploy"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "ci:all-checks-green"
+          }
+        ],
+        "rationale": "CI is the only systematic verification that code is correct before it reaches production. Bypassing it trades a transient inconvenience for an unquantified blast radius."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "safety/no-force-push-main",
+      "version": "1.0.0",
+      "name": "No force-push to main or release branches",
+      "description": "Denies force-push operations targeting main or any release/* branch. Prevents history rewriting on protected branches, preserving the audit trail required by delivery-cycle discipline.",
+      "tags": [
+        "git",
+        "safety",
+        "branch-protection"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "git:branch:main",
+          "git:branch:release/*"
+        ],
+        "actions": [
+          "git:push:force",
+          "git:push:force-with-lease"
+        ],
+        "conditions": [],
+        "rationale": "Force-push rewrites published history, breaks peer checkouts, and destroys the per-commit audit trail. No legitimate workflow requires it on protected branches."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "safety/no-secrets-in-artifacts",
+      "version": "1.0.0",
+      "name": "CI artifacts must not contain secrets or credentials",
+      "description": "Build artifacts, container images, and published packages must pass secret-scanning checks. Artifacts containing API keys, tokens, passwords, or private keys are denied publication.",
+      "tags": [
+        "secrets",
+        "safety",
+        "ci-gate",
+        "supply-chain"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "artifact:*",
+          "container-image:*",
+          "package:*"
+        ],
+        "actions": [
+          "publish",
+          "upload",
+          "push"
+        ],
+        "conditions": [
+          {
+            "type": "if",
+            "check": "scan:secret-detected"
+          }
+        ],
+        "rationale": "Secrets embedded in artifacts leak to every consumer of that artifact. Rotation after a public leak is painful and often incomplete."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "safety/require-pr-before-merge",
+      "version": "1.0.0",
+      "name": "Require pull request before merging to protected branches",
+      "description": "All merges to main or release/* branches must arrive via a reviewed pull request. Direct commits to protected branches are denied.",
+      "tags": [
+        "git",
+        "safety",
+        "code-review",
+        "branch-protection"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "git:branch:main",
+          "git:branch:release/*"
+        ],
+        "actions": [
+          "git:commit:direct",
+          "git:merge:direct"
+        ],
+        "conditions": [],
+        "rationale": "Pull requests create an auditable review checkpoint. Bypassing them removes the last line of defence before production-quality code is established."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "safety/require-signed-commits",
+      "version": "1.0.0",
+      "name": "Commits to main must be cryptographically signed",
+      "description": "All commits landing on main (via merge or direct) must carry a valid GPG, SSH, or S/MIME signature that resolves to a known identity in the organization's keyring.",
+      "tags": [
+        "git",
+        "safety",
+        "signing",
+        "supply-chain"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "git:branch:main"
+        ],
+        "actions": [
+          "git:commit:accept"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "git:commit:signature-verified"
+          }
+        ],
+        "rationale": "Unsigned commits cannot prove authorship. Signed commits tie every change to a verified identity, enabling attribution and revocation."
+      }
+    },
+    {
+      "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+      "type": "policy",
+      "id": "safety/require-test-coverage",
+      "version": "1.0.0",
+      "name": "Require minimum 85% test coverage on changed lines",
+      "description": "Pull requests that reduce overall test coverage below 85%, or that introduce new uncovered lines, are denied merge until coverage is restored.",
+      "tags": [
+        "testing",
+        "safety",
+        "code-quality",
+        "ci-gate"
+      ],
+      "policy": {
+        "effect": "deny",
+        "subjects": [
+          "*"
+        ],
+        "resources": [
+          "git:pull-request:*"
+        ],
+        "actions": [
+          "merge"
+        ],
+        "conditions": [
+          {
+            "type": "unless",
+            "check": "ci:coverage >= 0.85"
+          }
+        ],
+        "rationale": "Test coverage below 85% leaves statistically significant surface area unverified. The threshold is a floor, not a target — teams should aim higher."
+      }
+    }
+  ],
   "compositions": [
     {
       "id": "policy-atoms/policy/baseline",

@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "operational/require-error-handling",
+  "version": "1.0.0",
+  "name": "Every external API call must have explicit error handling",
+  "description": "Code that invokes external APIs, third-party services, or network endpoints must have explicit error handling that either recovers, retries with backoff, or escalates with a logged error. Silent swallowing of errors is denied at code review.",
+  "tags": ["operational", "error-handling", "reliability", "code-quality"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["code:external-call:*"],
+    "actions": ["merge"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "code:error-handling-absent"
+      }
+    ],
+    "rationale": "External calls fail. Without explicit error handling, every third-party outage becomes an unhandled exception that corrupts application state or silently drops data."
+  }
+}

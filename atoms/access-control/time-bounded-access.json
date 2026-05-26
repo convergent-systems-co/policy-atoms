@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "access-control/time-bounded-access",
+  "version": "1.0.0",
+  "name": "Elevated access grants expire after 24 hours",
+  "description": "Any access grant marked as elevated — temporary admin, break-glass access, on-call escalation — automatically expires 24 hours after issuance. Renewal requires a fresh approval.",
+  "tags": ["access-control", "time-bounded", "least-privilege", "break-glass"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["role:elevated", "role:temporary-admin", "role:break-glass"],
+    "resources": ["*"],
+    "actions": ["*"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "access:grant-age > 86400s"
+      }
+    ],
+    "rationale": "Permanent elevated access is a vulnerability waiting to be exploited. Time-bounding forces periodic reconfirmation that elevated access is still needed."
+  }
+}

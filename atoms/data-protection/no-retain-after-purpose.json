@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "data-protection/no-retain-after-purpose",
+  "version": "1.0.0",
+  "name": "Data must be deleted when its collection purpose expires",
+  "description": "Data must not be retained beyond the stated retention period or after the purpose for which it was collected is fulfilled. Continued storage of expired-purpose data is denied and triggers a deletion workflow.",
+  "tags": ["data-protection", "retention", "privacy", "compliance", "gdpr"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["storage:*"],
+    "actions": ["retain"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "data:retention-period-expired"
+      }
+    ],
+    "rationale": "Data you don't have can't be breached or misused. Retention limits enforce data minimization and reduce liability exposure under privacy regulations."
+  }
+}

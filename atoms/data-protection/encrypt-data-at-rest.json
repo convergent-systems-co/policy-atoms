@@ -1,0 +1,26 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "data-protection/encrypt-data-at-rest",
+  "version": "1.0.0",
+  "name": "Sensitive data must be encrypted at rest",
+  "description": "Data classified as sensitive (PII, credentials, financial records, health data) must be stored using AES-256 or equivalent encryption. Storage of sensitive data in plaintext is denied.",
+  "tags": ["data-protection", "encryption", "storage", "compliance"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["storage:*"],
+    "actions": ["write"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "data:classification == sensitive"
+      },
+      {
+        "type": "unless",
+        "check": "storage:encryption-enabled"
+      }
+    ],
+    "rationale": "Encryption at rest ensures that physical or logical access to storage media does not directly expose sensitive data. Defense in depth requires this layer even when access controls are strong."
+  }
+}

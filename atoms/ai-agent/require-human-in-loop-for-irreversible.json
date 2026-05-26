@@ -1,0 +1,17 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "ai-agent/require-human-in-loop-for-irreversible",
+  "version": "1.0.0",
+  "name": "Irreversible actions require human approval regardless of agent confidence",
+  "description": "Actions that cannot be undone — permanent deletion, table drops, published releases, sent communications, financial transactions — require explicit human approval before execution. No level of agent confidence bypasses this gate.",
+  "tags": ["ai-agent", "human-in-loop", "irreversible", "safety"],
+  "policy": {
+    "effect": "require-confirm",
+    "subjects": ["agent:*", "identity:ai-*"],
+    "resources": ["*"],
+    "actions": ["delete:permanent", "drop", "publish", "send:external", "transaction:financial"],
+    "conditions": [],
+    "rationale": "Reversibility is a prerequisite for autonomous action. When an action cannot be reversed, the cost of a mistake is unbounded. Human approval is the minimum acceptable gate regardless of chain-of-thought length."
+  }
+}

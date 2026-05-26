@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "data-protection/no-pii-in-logs",
+  "version": "1.0.0",
+  "name": "Log entries must not contain personally identifiable information",
+  "description": "Structured log entries must not contain PII including email addresses, SSNs, phone numbers, physical addresses, full names, or government-issued identifiers. PII-containing log writes are denied at the logging boundary.",
+  "tags": ["data-protection", "pii", "logging", "privacy"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["log:*"],
+    "actions": ["write"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "content:pii-detected"
+      }
+    ],
+    "rationale": "Logs are often retained long-term, indexed broadly, and accessible to many engineers. PII in logs creates privacy exposure that is difficult to remediate retroactively."
+  }
+}
