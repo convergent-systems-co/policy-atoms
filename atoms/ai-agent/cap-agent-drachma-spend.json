@@ -1,0 +1,26 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "ai-agent/cap-agent-drachma-spend",
+  "version": "1.0.0",
+  "name": "Agent sessions are capped at 100 drachma unless explicitly raised",
+  "description": "An agent session must not spend more than 100 drachma in inference, tool-call, or external API costs without explicit authorization from the principal. Sessions that reach the cap are paused and must request continuation.",
+  "tags": ["ai-agent", "cost-control", "drachma", "olympus"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["agent:*"],
+    "resources": ["resource:inference:*", "resource:tool-call:*", "resource:external-api:*"],
+    "actions": ["invoke", "spend"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "session:drachma-spent >= 100"
+      },
+      {
+        "type": "unless",
+        "check": "principal:raised-cap-this-session"
+      }
+    ],
+    "rationale": "Unbounded agent spend is a runaway cost risk. A 100-drachma default cap ensures agents pause and ask before escalating spend, giving the principal an opportunity to reconsider scope."
+  }
+}

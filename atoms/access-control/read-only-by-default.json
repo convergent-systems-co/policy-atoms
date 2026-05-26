@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "access-control/read-only-by-default",
+  "version": "1.0.0",
+  "name": "New identities receive read-only access until explicitly escalated",
+  "description": "Newly provisioned users, service accounts, and agents are granted read-only access to their designated scope by default. Write, execute, and admin permissions must be explicitly granted via a separate approval.",
+  "tags": ["access-control", "least-privilege", "onboarding", "default-deny"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["identity:new"],
+    "resources": ["*"],
+    "actions": ["write", "delete", "exec", "admin:*"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "access:explicit-write-grant-exists"
+      }
+    ],
+    "rationale": "Default read-only prevents accidental mutation during the onboarding window when principals are least familiar with the system. Escalation is a deliberate act."
+  }
+}

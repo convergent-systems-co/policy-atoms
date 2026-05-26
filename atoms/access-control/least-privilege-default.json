@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "access-control/least-privilege-default",
+  "version": "1.0.0",
+  "name": "Least privilege — default deny, explicit grant only",
+  "description": "All access is denied by default. Permissions must be explicitly granted to named subjects for specific resources and actions. No implicit inheritance of broad grants.",
+  "tags": ["access-control", "least-privilege", "zero-trust"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["*"],
+    "actions": ["*"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "access:explicit-grant-exists"
+      }
+    ],
+    "rationale": "Default-deny is the foundation of zero-trust. Every permission that doesn't exist in the grant table is a permissions that can't be exploited."
+  }
+}

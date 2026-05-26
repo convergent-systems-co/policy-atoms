@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "ai-agent/no-autonomous-production-writes",
+  "version": "1.0.0",
+  "name": "AI agents cannot write to production without human confirmation",
+  "description": "Autonomous AI agents are denied write operations on production resources without explicit human confirmation in the current session. The confirmation must name the resource and action; blanket pre-authorizations are not accepted.",
+  "tags": ["ai-agent", "production", "human-in-loop", "safety"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["agent:*", "identity:ai-*"],
+    "resources": ["environment:production:*"],
+    "actions": ["write", "delete", "deploy", "migrate"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "human:confirmation-given-this-session"
+      }
+    ],
+    "rationale": "Production writes by autonomous agents carry blast radius that exceeds the agent's ability to evaluate context. Human confirmation is a circuit breaker, not bureaucracy."
+  }
+}

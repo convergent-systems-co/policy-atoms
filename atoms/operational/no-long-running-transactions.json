@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "operational/no-long-running-transactions",
+  "version": "1.0.0",
+  "name": "Database transactions must complete within 30 seconds",
+  "description": "Database transactions that exceed 30 seconds are automatically rolled back and the initiating query is logged. Transactions holding locks for more than 30 seconds block other operations and indicate a design defect.",
+  "tags": ["operational", "database", "transactions", "performance"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["database:transaction:*"],
+    "actions": ["hold"],
+    "conditions": [
+      {
+        "type": "if",
+        "check": "transaction:age > 30s"
+      }
+    ],
+    "rationale": "Long-running transactions hold locks that cascade into broader unavailability. A 30-second bound is generous for application logic and strict enough to prevent runaway queries from starving the system."
+  }
+}

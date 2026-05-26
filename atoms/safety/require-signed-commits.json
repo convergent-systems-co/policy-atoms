@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "safety/require-signed-commits",
+  "version": "1.0.0",
+  "name": "Commits to main must be cryptographically signed",
+  "description": "All commits landing on main (via merge or direct) must carry a valid GPG, SSH, or S/MIME signature that resolves to a known identity in the organization's keyring.",
+  "tags": ["git", "safety", "signing", "supply-chain"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["git:branch:main"],
+    "actions": ["git:commit:accept"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "git:commit:signature-verified"
+      }
+    ],
+    "rationale": "Unsigned commits cannot prove authorship. Signed commits tie every change to a verified identity, enabling attribution and revocation."
+  }
+}

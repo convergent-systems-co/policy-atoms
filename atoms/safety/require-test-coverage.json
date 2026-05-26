@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "safety/require-test-coverage",
+  "version": "1.0.0",
+  "name": "Require minimum 85% test coverage on changed lines",
+  "description": "Pull requests that reduce overall test coverage below 85%, or that introduce new uncovered lines, are denied merge until coverage is restored.",
+  "tags": ["testing", "safety", "code-quality", "ci-gate"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["git:pull-request:*"],
+    "actions": ["merge"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "ci:coverage >= 0.85"
+      }
+    ],
+    "rationale": "Test coverage below 85% leaves statistically significant surface area unverified. The threshold is a floor, not a target — teams should aim higher."
+  }
+}

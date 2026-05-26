@@ -1,0 +1,22 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "access-control/require-2fa-admin",
+  "version": "1.0.0",
+  "name": "Administrative actions require 2FA verification",
+  "description": "Any action classified as administrative — user provisioning, permission changes, configuration mutations, credential rotation — requires a verified 2FA challenge within the current session.",
+  "tags": ["access-control", "mfa", "admin", "authentication"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["*"],
+    "actions": ["admin:*", "iam:*", "config:write", "credential:rotate"],
+    "conditions": [
+      {
+        "type": "unless",
+        "check": "auth:2fa-verified"
+      }
+    ],
+    "rationale": "Administrative actions have outsized blast radius. 2FA ensures that even a compromised password alone is insufficient to execute them."
+  }
+}

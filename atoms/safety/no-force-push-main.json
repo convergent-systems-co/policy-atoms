@@ -1,0 +1,17 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "safety/no-force-push-main",
+  "version": "1.0.0",
+  "name": "No force-push to main or release branches",
+  "description": "Denies force-push operations targeting main or any release/* branch. Prevents history rewriting on protected branches, preserving the audit trail required by delivery-cycle discipline.",
+  "tags": ["git", "safety", "branch-protection"],
+  "policy": {
+    "effect": "deny",
+    "subjects": ["*"],
+    "resources": ["git:branch:main", "git:branch:release/*"],
+    "actions": ["git:push:force", "git:push:force-with-lease"],
+    "conditions": [],
+    "rationale": "Force-push rewrites published history, breaks peer checkouts, and destroys the per-commit audit trail. No legitimate workflow requires it on protected branches."
+  }
+}

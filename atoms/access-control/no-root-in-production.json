@@ -1,0 +1,26 @@
+{
+  "schema": "https://policy-atoms.com/schemas/atom-v1.json",
+  "type": "policy",
+  "id": "access-control/no-root-in-production",
+  "version": "1.0.0",
+  "name": "Root or admin access to production requires MFA and justification",
+  "description": "Access to production systems using root or administrative credentials is denied unless the session has a recent MFA verification (within 15 minutes) and a logged justification reason.",
+  "tags": ["access-control", "production", "mfa", "admin"],
+  "policy": {
+    "effect": "require-confirm",
+    "subjects": ["role:admin", "role:root"],
+    "resources": ["environment:production:*"],
+    "actions": ["*"],
+    "conditions": [
+      {
+        "type": "require",
+        "check": "auth:mfa-verified-within-15m"
+      },
+      {
+        "type": "require",
+        "check": "audit:justification-logged"
+      }
+    ],
+    "rationale": "Root access to production is the highest-risk action in an organization's surface area. MFA recency and logged justification ensure every such session is deliberate and traceable."
+  }
+}
