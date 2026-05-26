@@ -1,0 +1,63 @@
+# atoms/require-blast-radius-estimate.toml — SRE safety policy atom
+#
+# Requires an estimated blast radius to be declared before any infrastructure
+# change or workflow execution proceeds.
+#
+# Conforms to: policy-atoms catalog spec (atoms-spec/v1.1.0)
+
+id           = "policy-atoms/policy/require-blast-radius-estimate"
+version      = "1.0.0"
+content_hash = ""
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+[body]
+name        = "Require Blast Radius Estimate"
+description = """
+Requires that any infrastructure change, runbook execution, or deployment
+workflow declares a blast_radius field before the operation is dispatched.
+Absent or empty blast_radius causes the operation to be blocked. This policy
+operationalizes the SRE principle: know your blast radius before you act.
+"""
+enforcement = "deny"
+
+[[body.rules]]
+id          = "deny-missing-blast-radius"
+description = "Deny infrastructure changes and workflow executions that lack a blast_radius field."
+condition   = "intent matches /deploy|apply|migrate|execute-workflow|rollout|scale/i AND (params.blast_radius == null OR params.blast_radius == '')"
+action      = "deny"
+reason      = "Operation blocked: blast_radius estimate is required before infrastructure changes may proceed."
+
+[[body.rules]]
+id          = "deny-zero-blast-radius-on-prod"
+description = "Deny blast_radius='none' declarations on production without justification."
+condition   = "resource.env == 'production' AND params.blast_radius == 'none' AND (params.blast_radius_justification == null OR params.blast_radius_justification == '')"
+action      = "deny"
+reason      = "Claiming zero blast radius on production without justification is disallowed — provide blast_radius_justification."
+
+[[body.rules]]
+id          = "allow-with-estimate"
+description = "Allow operations that carry a non-empty blast_radius declaration."
+condition   = "params.blast_radius != null AND params.blast_radius != ''"
+action      = "allow"
+reason      = "Blast radius declared — operation may proceed."
+
+[[body.rules]]
+id          = "allow-read-only"
+description = "Allow read-only and observe intents without requiring a blast radius estimate."
+condition   = "intent matches /read|observe|list|get|describe|status|report/i"
+action      = "allow"
+reason      = "Read-only operations carry no blast radius and are exempt from this policy."
+
+[body.caps]
+drachma_per_session = 0
+
+[body.trust_requirements]
+min_trust_level = "Signed"
+
+[body.tags]
+tags = ["sre", "blast-radius", "infrastructure", "safety", "pre-flight"]
+
+[meta]
+provenance = "convergent-systems-co/olympus-central#435"
+license    = "Apache-2.0"
