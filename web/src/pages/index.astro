@@ -4,7 +4,7 @@ const title = "policy-atoms";
 const tagline = "Governance rules as typed artifacts — subjects, resources, actions, effects, and conditions.";
 const counts = { atoms: catalog.atoms.length, compositions: catalog.compositions.length, rules: catalog.rules.length };
 const byType: Record<string, number> = {};
-for (const a of catalog.atoms) byType[a.type] = (byType[a.type] ?? 0) + 1;
+for (const a of (catalog.atoms as Array<{type: string}>)) byType[a.type] = (byType[a.type] ?? 0) + 1;
 ---
 <!doctype html>
 <html lang="en">
