@@ -1,0 +1,26 @@
+# atoms/operational/audit-all-admin.toml
+#
+# Emits a structured audit event for any admin action regardless of subject.
+# Conforms to: schema-atoms/atoms/policy-dsl.toml (class = "policy-dsl")
+
+id           = "policy-atoms/policy-dsl/audit-all-admin"
+version      = "1.0.0"
+content_hash = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+kind  = "policy"
+name  = "Audit All Admin Actions"
+class = "policy-dsl"
+
+description = "Records a structured audit event whenever an admin action is invoked, regardless of subject identity."
+
+expression_type = "audit"
+subject         = "*"
+action          = "admin"
+
+conditions = [
+  "action == 'admin'",
+]
+
+effect = "audit"

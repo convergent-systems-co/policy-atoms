@@ -3,6 +3,7 @@
 
 Reads ATOMS.yml for catalog metadata and composition directory name.
 Validates each JSON file against its schema; exits 1 on failure.
+TOML atoms are loaded natively; JSON atoms are also supported.
 """
 import json
 import sys
@@ -20,6 +21,14 @@ try:
 except ImportError:
     print("error: pyyaml not installed. Run: pip install pyyaml", file=sys.stderr)
     sys.exit(2)
+
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    try:
+        import tomli as tomllib  # fallback: pip install tomli
+    except ImportError:
+        tomllib = None  # TOML loading disabled; only JSON atoms will be collected
 
 REPO = Path(__file__).resolve().parent.parent
 SCHEMA_DIR = REPO / "schemas"
@@ -44,21 +53,44 @@ def load_validator(name: str):
     return jsonschema.Draft202012Validator(schema)
 
 
+def _load_file(path: Path) -> dict:
+    """Load a JSON or TOML file into a dict."""
+    if path.suffix == ".toml":
+        if tomllib is None:
+            print(
+                f"warning: skipping {path.name} — tomllib/tomli not available; "
+                "install Python 3.11+ or run: pip install tomli",
+                file=sys.stderr,
+            )
+            return {}
+        with path.open("rb") as fh:
+            return tomllib.load(fh)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def collect(dir_path: Path, validator, label: str) -> list[dict]:
     if not dir_path.exists():
         return []
     out: list[dict] = []
-    for path in sorted(dir_path.rglob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if validator:
-            errors = list(validator.iter_errors(data))
-            if errors:
-                print(f"✗ {path.relative_to(REPO)} ({label}):", file=sys.stderr)
-                for err in errors:
-                    loc = "/".join(str(x) for x in err.absolute_path) or "<root>"
-                    print(f"    {err.message} at {loc}", file=sys.stderr)
-                sys.exit(1)
-        out.append(data)
+    patterns = ["*.json", "*.toml"]
+    seen: set[Path] = set()
+    for pattern in patterns:
+        for path in sorted(dir_path.rglob(pattern)):
+            if path in seen or path.name.startswith("."):
+                continue
+            seen.add(path)
+            data = _load_file(path)
+            if not data:
+                continue
+            if validator:
+                errors = list(validator.iter_errors(data))
+                if errors:
+                    print(f"✗ {path.relative_to(REPO)} ({label}):", file=sys.stderr)
+                    for err in errors:
+                        loc = "/".join(str(x) for x in err.absolute_path) or "<root>"
+                        print(f"    {err.message} at {loc}", file=sys.stderr)
+                    sys.exit(1)
+            out.append(data)
     return out
 
 

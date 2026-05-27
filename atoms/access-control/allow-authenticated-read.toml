@@ -1,0 +1,26 @@
+# atoms/access-control/allow-authenticated-read.toml
+#
+# Grants read access to any authenticated subject (non-empty subject).
+# Conforms to: schema-atoms/atoms/policy-dsl.toml (class = "policy-dsl")
+
+id           = "policy-atoms/policy-dsl/allow-authenticated-read"
+version      = "1.0.0"
+content_hash = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+kind  = "policy"
+name  = "Allow Authenticated Read"
+class = "policy-dsl"
+
+description = "Permits read operations for any authenticated subject (subject field is non-empty)."
+
+expression_type = "allow"
+subject         = "*"
+action          = "read"
+
+conditions = [
+  "subject != ''",
+]
+
+effect = "allow"

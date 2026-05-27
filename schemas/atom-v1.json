@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policy-atoms.com/schemas/atom-v1.json",
+  "title": "policy-atoms v1 atom",
+  "description": "A single atom in the policy-atoms catalog. Supports two formats: (1) JSON policy format with 'schema', 'type', and nested 'policy' object; (2) TOML-sourced policy-dsl format with 'kind', 'class', and top-level 'expression_type', 'subject', 'action', 'conditions', 'effect' fields.",
+  "type": "object",
+  "required": ["id", "version"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {
+      "type": "string",
+      "description": "JSON schema URI (present in JSON-format atoms)."
+    },
+    "type": {
+      "type": "string",
+      "description": "Atom type discriminator (present in JSON-format atoms)."
+    },
+    "id": {
+      "type": "string",
+      "description": "Atom identifier. Short form: '<category>/<slug>' or full form: 'policy-atoms/<class>/<slug>'."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "lifecycle": {
+      "type": "string",
+      "enum": ["draft", "published", "adopted", "historic"],
+      "description": "Lifecycle stage (present in TOML-format atoms)."
+    },
+    "created_at": {
+      "type": "string",
+      "description": "RFC 3339 creation timestamp (present in TOML-format atoms)."
+    },
+    "kind": {
+      "type": "string",
+      "description": "Atom kind (present in TOML-format atoms)."
+    },
+    "class": {
+      "type": "string",
+      "description": "Atom class, e.g. policy-dsl (present in TOML-format atoms)."
+    },
+    "expression_type": {
+      "type": "string",
+      "enum": ["allow", "deny", "audit"],
+      "description": "DSL expression intent (present in policy-dsl TOML atoms)."
+    },
+    "subject": {
+      "type": "string",
+      "description": "Principal pattern this rule applies to (policy-dsl TOML atoms)."
+    },
+    "action": {
+      "type": "string",
+      "description": "Operation pattern this rule governs (policy-dsl TOML atoms)."
+    },
+    "conditions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Predicate expressions for rule matching (policy-dsl TOML atoms)."
+    },
+    "effect": {
+      "type": "string",
+      "enum": ["allow", "deny", "audit"],
+      "description": "Enforcement outcome (policy-dsl TOML atoms)."
+    },
+    "policy": {
+      "type": "object",
+      "description": "Nested policy definition (JSON-format atoms)."
+    }
+  }
+}
