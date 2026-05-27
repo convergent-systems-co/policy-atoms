@@ -1,7 +1,7 @@
 {
   "catalog": "policy-atoms",
   "version": "0.1.0",
-  "built_at": "2026-05-26T21:14:50+00:00",
+  "built_at": "2026-05-27T17:58:06+00:00",
   "atoms": [
     {
       "schema": "https://policy-atoms.com/schemas/atom-v1.json",
@@ -968,6 +968,207 @@
         ],
         "rationale": "Test coverage below 85% leaves statistically significant surface area unverified. The threshold is a floor, not a target — teams should aim higher."
       }
+    },
+    {
+      "id": "policy-atoms/policy-dsl/allow-authenticated-read",
+      "version": "1.0.0",
+      "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lifecycle": "draft",
+      "created_at": "2026-05-26T00:00:00Z",
+      "kind": "policy",
+      "name": "Allow Authenticated Read",
+      "class": "policy-dsl",
+      "description": "Permits read operations for any authenticated subject (subject field is non-empty).",
+      "expression_type": "allow",
+      "subject": "*",
+      "action": "read",
+      "conditions": [
+        "subject != ''"
+      ],
+      "effect": "allow"
+    },
+    {
+      "id": "policy-atoms/policy/no-destructive-prod-writes",
+      "version": "1.0.0",
+      "content_hash": "",
+      "lifecycle": "draft",
+      "created_at": "2026-05-26T00:00:00Z",
+      "body": {
+        "name": "No Destructive Production Writes",
+        "description": "Denies write, delete, drop, truncate, and force-push operations that target\nresources tagged as production unless a backup-confirmation step immediately\nprecedes the operation in the workflow. Enforces the blast-radius principle:\nproduction mutations must be preceded by an explicit checkpoint.\n",
+        "enforcement": "deny",
+        "rules": [
+          {
+            "id": "deny-drop-prod",
+            "description": "Deny DROP, DELETE, TRUNCATE on production-tagged database resources without prior backup.",
+            "condition": "resource.env == 'production' AND intent matches /drop|delete|truncate/i AND NOT prior_step.type == 'backup-confirmation'",
+            "action": "deny",
+            "reason": "Destructive database operation in production requires a confirmed backup first."
+          },
+          {
+            "id": "deny-force-push-main",
+            "description": "Deny git force-push to protected branches (main, release/*).",
+            "condition": "intent == 'git.push' AND params.force == true AND params.ref matches /^(main|release\\/.+)$/",
+            "action": "deny",
+            "reason": "Force-pushing to protected branches destroys history and is prohibited."
+          },
+          {
+            "id": "deny-deploy-without-backup",
+            "description": "Deny deploy operations to production that lack a backup confirmation in the current workflow.",
+            "condition": "resource.env == 'production' AND intent matches /deploy|rollout|apply/i AND NOT prior_step.type == 'backup-confirmation'",
+            "action": "deny",
+            "reason": "Production deployments require a backup-confirmation gate to have passed first."
+          },
+          {
+            "id": "allow-with-backup",
+            "description": "Allow production writes when a backup confirmation immediately precedes the operation.",
+            "condition": "resource.env == 'production' AND prior_step.type == 'backup-confirmation' AND prior_step.status == 'confirmed'",
+            "action": "allow",
+            "reason": "Backup confirmed — production mutation may proceed."
+          },
+          {
+            "id": "allow-non-prod",
+            "description": "Allow write operations on non-production resources without restriction.",
+            "condition": "resource.env != 'production'",
+            "action": "allow",
+            "reason": "Non-production environments are not subject to this policy."
+          }
+        ],
+        "caps": {
+          "drachma_per_session": 0
+        },
+        "trust_requirements": {
+          "min_trust_level": "Signed"
+        },
+        "tags": {
+          "tags": [
+            "sre",
+            "production",
+            "destructive-write",
+            "safety",
+            "backup-gate"
+          ]
+        }
+      },
+      "meta": {
+        "provenance": "convergent-systems-co/olympus-central#435",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "policy-atoms/policy-dsl/allow-local-models",
+      "version": "1.0.0",
+      "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lifecycle": "draft",
+      "created_at": "2026-05-26T00:00:00Z",
+      "kind": "policy",
+      "name": "Allow Local Ollama Models",
+      "class": "policy-dsl",
+      "description": "Grants model-invoke access unconditionally when the provider is the local Ollama runtime, enabling offline-first and air-gapped deployments.",
+      "expression_type": "allow",
+      "subject": "*",
+      "action": "model-invoke",
+      "conditions": [
+        "provider == 'ollama'"
+      ],
+      "effect": "allow"
+    },
+    {
+      "id": "policy-atoms/policy-dsl/audit-all-admin",
+      "version": "1.0.0",
+      "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lifecycle": "draft",
+      "created_at": "2026-05-26T00:00:00Z",
+      "kind": "policy",
+      "name": "Audit All Admin Actions",
+      "class": "policy-dsl",
+      "description": "Records a structured audit event whenever an admin action is invoked, regardless of subject identity.",
+      "expression_type": "audit",
+      "subject": "*",
+      "action": "admin",
+      "conditions": [
+        "action == 'admin'"
+      ],
+      "effect": "audit"
+    },
+    {
+      "id": "policy-atoms/policy/require-blast-radius-estimate",
+      "version": "1.0.0",
+      "content_hash": "",
+      "lifecycle": "draft",
+      "created_at": "2026-05-26T00:00:00Z",
+      "body": {
+        "name": "Require Blast Radius Estimate",
+        "description": "Requires that any infrastructure change, runbook execution, or deployment\nworkflow declares a blast_radius field before the operation is dispatched.\nAbsent or empty blast_radius causes the operation to be blocked. This policy\noperationalizes the SRE principle: know your blast radius before you act.\n",
+        "enforcement": "deny",
+        "rules": [
+          {
+            "id": "deny-missing-blast-radius",
+            "description": "Deny infrastructure changes and workflow executions that lack a blast_radius field.",
+            "condition": "intent matches /deploy|apply|migrate|execute-workflow|rollout|scale/i AND (params.blast_radius == null OR params.blast_radius == '')",
+            "action": "deny",
+            "reason": "Operation blocked: blast_radius estimate is required before infrastructure changes may proceed."
+          },
+          {
+            "id": "deny-zero-blast-radius-on-prod",
+            "description": "Deny blast_radius='none' declarations on production without justification.",
+            "condition": "resource.env == 'production' AND params.blast_radius == 'none' AND (params.blast_radius_justification == null OR params.blast_radius_justification == '')",
+            "action": "deny",
+            "reason": "Claiming zero blast radius on production without justification is disallowed — provide blast_radius_justification."
+          },
+          {
+            "id": "allow-with-estimate",
+            "description": "Allow operations that carry a non-empty blast_radius declaration.",
+            "condition": "params.blast_radius != null AND params.blast_radius != ''",
+            "action": "allow",
+            "reason": "Blast radius declared — operation may proceed."
+          },
+          {
+            "id": "allow-read-only",
+            "description": "Allow read-only and observe intents without requiring a blast radius estimate.",
+            "condition": "intent matches /read|observe|list|get|describe|status|report/i",
+            "action": "allow",
+            "reason": "Read-only operations carry no blast radius and are exempt from this policy."
+          }
+        ],
+        "caps": {
+          "drachma_per_session": 0
+        },
+        "trust_requirements": {
+          "min_trust_level": "Signed"
+        },
+        "tags": {
+          "tags": [
+            "sre",
+            "blast-radius",
+            "infrastructure",
+            "safety",
+            "pre-flight"
+          ]
+        }
+      },
+      "meta": {
+        "provenance": "convergent-systems-co/olympus-central#435",
+        "license": "Apache-2.0"
+      }
+    },
+    {
+      "id": "policy-atoms/policy-dsl/deny-unauthenticated-write",
+      "version": "1.0.0",
+      "content_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "lifecycle": "draft",
+      "created_at": "2026-05-26T00:00:00Z",
+      "kind": "policy",
+      "name": "Deny Unauthenticated Write",
+      "class": "policy-dsl",
+      "description": "Blocks write operations when no subject identity is present (unauthenticated request).",
+      "expression_type": "deny",
+      "subject": "",
+      "action": "write",
+      "conditions": [
+        "subject == ''"
+      ],
+      "effect": "deny"
     }
   ],
   "compositions": [

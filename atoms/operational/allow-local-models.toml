@@ -1,0 +1,26 @@
+# atoms/operational/allow-local-models.toml
+#
+# Permits any model invocation when the provider is the local Ollama runtime.
+# Conforms to: schema-atoms/atoms/policy-dsl.toml (class = "policy-dsl")
+
+id           = "policy-atoms/policy-dsl/allow-local-models"
+version      = "1.0.0"
+content_hash = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+kind  = "policy"
+name  = "Allow Local Ollama Models"
+class = "policy-dsl"
+
+description = "Grants model-invoke access unconditionally when the provider is the local Ollama runtime, enabling offline-first and air-gapped deployments."
+
+expression_type = "allow"
+subject         = "*"
+action          = "model-invoke"
+
+conditions = [
+  "provider == 'ollama'",
+]
+
+effect = "allow"

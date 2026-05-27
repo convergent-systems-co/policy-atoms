@@ -1,0 +1,26 @@
+# atoms/safety/deny-unauthenticated-write.toml
+#
+# Blocks write operations from unauthenticated subjects (empty subject).
+# Conforms to: schema-atoms/atoms/policy-dsl.toml (class = "policy-dsl")
+
+id           = "policy-atoms/policy-dsl/deny-unauthenticated-write"
+version      = "1.0.0"
+content_hash = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+lifecycle    = "draft"
+created_at   = "2026-05-26T00:00:00Z"
+
+kind  = "policy"
+name  = "Deny Unauthenticated Write"
+class = "policy-dsl"
+
+description = "Blocks write operations when no subject identity is present (unauthenticated request)."
+
+expression_type = "deny"
+subject         = ""
+action          = "write"
+
+conditions = [
+  "subject == ''",
+]
+
+effect = "deny"
